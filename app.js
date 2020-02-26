@@ -1,5 +1,8 @@
 $(document).ready(function(){
     console.log('Jqueryis working');
+
+    let edit = false;
+
     $('#task-result').hide();
     fetchTasks();
 
@@ -31,12 +34,18 @@ $(document).ready(function(){
     });
 
     $('#task-form').submit(function(e){
+        
         const posData = {
             name: $('#name').val(),
-            description: $('#description').val()
+            description: $('#description').val(),
+            id: $('#taskId').val()
         }
 
-        $.post('task-add.php',posData, function(response){
+        let url = edit === false ? 'task-add.php' : 'task-edit.php';
+        edit = false;
+
+        $.post(url,posData, function(response){
+            console.log(response);
             fetchTasks();
             $('#task-form').trigger('reset');
         });
@@ -55,7 +64,9 @@ $(document).ready(function(){
                     template += `
                     <tr taskId="${task.id}">
                         <td>${task.id}</td>
-                        <td>${task.name}</td>
+                        <td>
+                            <a href="#" class="task-item"> ${task.name}</a>
+                        </td>
                         <td>${task.description}</td>
                         <td>
                             <button class="task-delete btn btn-danger">
@@ -72,11 +83,31 @@ $(document).ready(function(){
         });
     }
 
+
     $(document).on('click','.task-delete', function(){
+        if(confirm("Are you sure to delete it?")){
+            let element = $(this)[0].parentElement.parentElement;
+            let id = $(element).attr('taskId');
+            $.post('task-delete.php',{id},function(response){
+                fetchTasks();
+                console.log(response);
+        });
+        }
+    });
+
+
+    $(document).on('click','.task-item', function(){
         let element = $(this)[0].parentElement.parentElement;
-        let id = $(element).attr('taskId');
-        console.log(id)
-    })
+            let id = $(element).attr('taskId');
+            $.post('task-single.php',{id},function(response){
+                const task = JSON.parse(response);
+                $('#name').val(task.name);
+                $('#description').val(task.description);
+                $('#taskId').val(task.id);
+                edit = true;
+                console.log(task);
+        });
+    });
 
 
 });
